@@ -1,0 +1,3 @@
+Flask==2.0.1
+# Flask 2.0.1 breaks with Werkzeug 3.x (ImportError: url_quote); pin a compatible version
+Werkzeug==2.0.3

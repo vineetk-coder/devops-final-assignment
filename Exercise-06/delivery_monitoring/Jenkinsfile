@@ -1,0 +1,82 @@
+// Exercise-06 — Delivery monitoring pipeline (Python app + Prometheus + Grafana)
+//
+// Change from the reference: the "Setup Workspace" stage used a hard-coded absolute path
+// ('/path/to/your/local/files'). Here the files come from the repository checked out by
+// Jenkins, using the RELATIVE path in SOURCE_DIR. Set SOURCE_DIR to '.' if you paste this
+// pipeline into a job whose repo root is the delivery_monitoring folder itself.
+pipeline {
+    agent any
+    parameters {
+        string(name: 'SOURCE_DIR', defaultValue: 'Exercise-06/delivery_monitoring',
+               description: 'Path (relative to the workspace) containing the monitoring files')
+    }
+    stages {
+        stage('Pre-check Docker') {
+            steps {
+                script {
+                    try {
+                        // Check if Docker is installed
+                        def dockerVersion = sh(script: 'docker --version', returnStdout: true).trim()
+                        if (!dockerVersion) {
+                            error "Docker is not installed or not in the PATH. Please install Docker."
+                        }
+
+                        // Check if Docker daemon is running
+                        def dockerInfo = sh(script: 'docker info', returnStatus: true)
+                        if (dockerInfo != 0) {
+                            error "Docker daemon is not running. Please start the Docker service."
+                        }
+
+                        echo "Docker is available and running: ${dockerVersion}"
+                    } catch (Exception e) {
+                        error "Pre-check failed: ${e.message}"
+                    }
+                }
+            }
+        }
+        stage('Setup Workspace') {
+            steps {
+                script {
+                    // Relative source path inside the checked-out repository
+                    def localSourcePath = params.SOURCE_DIR
+                    def workspacePath = env.WORKSPACE
+
+                    // Copy necessary files into the Jenkins workspace root
+                    if (localSourcePath != '.') {
+                        sh """
+                        cp ${localSourcePath}/delivery_metrics.py ${workspacePath}/
+                        cp ${localSourcePath}/prometheus.yml ${workspacePath}/
+                        cp ${localSourcePath}/alert_rules.yml ${workspacePath}/
+                        cp ${localSourcePath}/requirements.txt ${workspacePath}/
+                        cp ${localSourcePath}/Dockerfile ${workspacePath}/
+                        """
+                    }
+                }
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t delivery_metrics .'
+            }
+        }
+        stage('Run Application') {
+            steps {
+                // Remove a previous run's container so the pipeline is re-runnable
+                sh 'docker rm -f delivery_metrics || true'
+                sh 'docker run -d -p 8000:8000 --name delivery_metrics delivery_metrics'
+            }
+        }
+        stage('Run Prometheus & Grafana') {
+            steps {
+                sh '''
+                docker rm -f prometheus grafana || true
+                docker run -d --name prometheus -p 9090:9090 \
+                  -v $WORKSPACE/prometheus.yml:/etc/prometheus/prometheus.yml \
+                  -v $WORKSPACE/alert_rules.yml:/etc/prometheus/alert_rules.yml \
+                  prom/prometheus
+                docker run -d --name grafana -p 3000:3000 grafana/grafana
+                '''
+            }
+        }
+    }
+}

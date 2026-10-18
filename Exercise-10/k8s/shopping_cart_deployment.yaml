@@ -1,0 +1,32 @@
+# shopping_cart_deployment.yaml
+# NOTE: the reference used `namespace: devops-exercise` here, but that namespace is never
+# created and shopping-cart-service lives in `default` (a Service only selects pods in its
+# own namespace). Using `default` so `kubectl apply` works and the Service finds the pods.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shopping-cart
+  namespace: default
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: shopping-cart
+  template:
+    metadata:
+      labels:
+        app: shopping-cart
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: shopping-cart
+            topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: shopping-cart-container
+        image: shopping-cart:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 80

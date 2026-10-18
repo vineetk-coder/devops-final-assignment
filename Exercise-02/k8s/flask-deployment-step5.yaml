@@ -1,0 +1,22 @@
+# Step 5 version of the manifest: Deployment only (no Service yet).
+# Applying this and running `curl http://127.0.0.1:15000` FAILS on purpose (Step 12).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask-app
+  template:
+    metadata:
+      labels:
+        app: flask-app
+    spec:
+      containers:
+      - name: flask-app
+        image: flask-app:latest
+        imagePullPolicy: Never   # use the image built inside Minikube's Docker daemon
+        ports:
+        - containerPort: 15000

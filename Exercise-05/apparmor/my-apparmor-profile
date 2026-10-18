@@ -1,0 +1,36 @@
+#include <tunables/global>
+
+# Install to: /etc/apparmor.d/my-apparmor-profile
+# Load with:  sudo apparmor_parser -r /etc/apparmor.d/my-apparmor-profile
+#
+# NOTE: the reference header was "/usr/bin/python3 { ... }". That creates a profile
+# NAMED "/usr/bin/python3", so `--security-opt apparmor=my-apparmor-profile` would fail
+# with "profile not found". Docker needs a profile with this exact name, so we declare it
+# with `profile my-apparmor-profile`. All restriction rules from the reference are kept.
+profile my-apparmor-profile flags=(attach_disconnected,mediate_deleted) {
+    #include <abstractions/base>
+
+    # Baseline allows so the container can start (deny rules below take precedence)
+    file,
+    capability,
+    signal (receive) peer=unconfined,
+    signal (send,receive) peer=my-apparmor-profile,
+
+    # Deny access to sensitive system files
+    deny /etc/** r,
+    deny /var/** rw,
+
+    # Allow Flask app to bind to port 5000
+    network inet stream,
+
+    # Permissions to the application directory
+    /app/** rwk,
+
+    # Deny execution of any binaries in /bin or /usr/bin
+    deny /bin/** rmix,
+    deny /usr/bin/** rmix,
+
+    # Capability restrictions
+    capability net_bind_service,
+    deny capability sys_admin,
+}

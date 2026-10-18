@@ -1,0 +1,43 @@
+# Additional Challenge: "Create a Deployment instead of a ReplicaSet".
+# Do NOT apply together with flashsale-replicaset.yaml (same labels); delete the RS first.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flashsale-deploy
+  labels:
+    app: flashsale
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: flashsale
+  template:
+    metadata:
+      labels:
+        app: flashsale
+    spec:
+      containers:
+      - name: flashsale-container
+        image: flashsale:1.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5000
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 2
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
