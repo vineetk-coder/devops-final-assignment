@@ -1,0 +1,11 @@
+# Shell scripts, Jenkinsfiles, Dockerfiles and YAML must keep LF endings for Linux tools
+* text=auto
+*.sh text eol=lf
+Jenkinsfile text eol=lf
+Dockerfile* text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+my-apparmor-profile text eol=lf
+*.zip binary
+*.png binary
+*.jpg binary

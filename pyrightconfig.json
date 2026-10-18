@@ -1,0 +1,9 @@
+{
+  "venvPath": ".",
+  "venv": ".venv",
+  "extraPaths": [
+    "Exercise-02", "Exercise-03", "Exercise-04", "Exercise-05",
+    "Exercise-06/delivery_monitoring", "Exercise-09/python-flask-app", "Exercise-10"
+  ],
+  "reportMissingModuleSource": "none"
+}

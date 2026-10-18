@@ -1,0 +1,7 @@
+# Tools needed to run the offline test-suite (scripts/run_all_tests.py)
+flask
+pyyaml
+prometheus-client
+docker
+flake8
+pyright
